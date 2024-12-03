@@ -1,0 +1,37 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no, width=device-width">
+    <title>beta2</title>
+    <link rel="stylesheet" href="https://a.amap.com/jsapi_demos/static/demo-center/css/demo-center.css" />
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+  	<script type="text/javascript" src="https://cache.amap.com/lbs/static/addToolbar.js"></script>
+       <script type="text/javascript">
+        window._AMapSecurityConfig = {
+            securityJsCode: 'ef31dce6fe5d6674a4b5a525de3ffabb',
+        };
+    </script>
+    <script type="text/javascript" src="https://webapi.amap.com/maps?v=2.0&key=31d872e0fe37b65b89baecd15f52172c&&plugin=AMap.PlaceSearch,AMap.InfoWindow"></script>
+    
+  </head>
+</head>
+<body>
+<div id="container" class="map"><div class="chat-container">   
+    <div class="chat-header">
+        地百通
+      </div>
+      <div class="chat-body" id="chatWindow">
+        <div class="info-prompt">
+          <div class="bubble">点击图上的点试试吧</div>
+        </div>
+      </div>
+      <div class="chat-footer">
+        <input type="text" class="chat_input" id="userInput" placeholder="输入消息..." onkeydown="if(event.keyCode==13) sendMessage(document.getElementById('userInput').value)">
+        <button class="chat-send-btn" onclick="sendMessage(document.getElementById('userInput').value)">发送</button>
+    </div>
+<script src="script.js.js"></script>
+</body>
+</html>

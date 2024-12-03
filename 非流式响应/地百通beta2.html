@@ -1,0 +1,321 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no, width=device-width">
+    <title>beta2</title>
+    <link rel="stylesheet" href="https://a.amap.com/jsapi_demos/static/demo-center/css/demo-center.css" />
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <style>
+        html,body{
+            width: 100%;
+            height: 100%;
+            margin: 0px;
+        }
+        .map{
+            position: absolute; 
+            height: 100%;
+            width: 100%;
+            float: left;
+            z-index: 1;
+        }
+        .info-title{
+            font-weight: bolder;
+            color: #000;
+            font-size: 14px;
+          width: 250px;
+            line-height: 26px;
+            padding: 0 0 0 6px;
+        }
+        .info-content{
+          width: 250px;
+            padding: 4px;
+            color: #666666;
+            line-height: 23px;
+            font: 12px Helvetica, 'Hiragino Sans GB', 'Microsoft Yahei', '微软雅黑', Arial;
+        }
+        .info-content img{
+            float: left;
+            margin: 3px;
+        }
+        .amap-info-combo .keyword-input {
+            height: auto;
+        }
+        .loading {
+      text-align: center;
+      padding: 10px;
+    }
+    .loading .spinner {
+      border: 4px solid #f3f3f3; /* Light grey */
+      border-top: 4px solid #3498db; /* Blue */
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      animation: spin 2s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .chat-container {
+        position: absolute;
+        width: 100%;
+        max-width: 35rem;
+        margin: 20px auto;
+        left: 1.5rem;
+        background-color: #fffdf6;
+        border-radius: 1rem;
+        overflow: hidden;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        z-index: 2
+    }
+    .chat-header {
+        background-color: #57b3da;
+        color: #fff;
+        padding: 10px;
+        text-align: center;
+    }
+    .chat-body {
+        height: 68rem;
+        padding: 10px;
+        overflow-y: scroll;
+    }
+    .chat-message {
+        margin-bottom: 10px;
+    }
+    .chat-message.right {
+        text-align: right;
+    }
+    .chat-message.left {
+        text-align: left;
+    }
+    .chat-message .bubble {
+        display: inline-block;
+        padding: 8px 12px;
+        border-radius: 5px;
+        max-width: 70%;
+        word-wrap: break-word;
+        background-color: #e5e5e5;
+    }
+    .chat-message.right .bubble {
+        background-color: #9cec74;
+    }
+    .chat-footer {
+        border-top: 1px solid #ddd;
+        padding: 8px;
+        display: flex; 
+        justify-content: space-between;
+    }
+    .chat_input {
+    width: 85%!important;
+    background-color: #fffdf6 !important;
+    height: 40px; 
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    box-sizing: border-box;
+}
+
+    .chat-send-btn {
+        padding: 8px 12px;
+        border: none;
+        background-color: #d7c8cb;
+        color: #fff;
+        border-radius: 5px;
+        cursor: pointer;
+
+    }
+    </style>
+  	<script type="text/javascript" src="https://cache.amap.com/lbs/static/addToolbar.js"></script>
+       <script type="text/javascript">
+        window._AMapSecurityConfig = {
+            securityJsCode: 'ef31dce6fe5d6674a4b5a525de3ffabb',
+        };
+    </script>
+    <script type="text/javascript" src="https://webapi.amap.com/maps?v=2.0&key=31d872e0fe37b65b89baecd15f52172c&&plugin=AMap.PlaceSearch,AMap.InfoWindow"></script>
+</head>
+</head>
+<body>
+<div id="container" class="map"><div class="chat-container">   
+    <div class="chat-header">
+        地百通
+      </div>
+      <div class="chat-body" id="chatWindow">
+        <div class="chat-message left">
+          <div class="bubble">点击图上的点试试吧</div>
+      </div>
+      </div>
+      <div class="chat-footer">
+        <input type="text" class="chat_input" id="userInput" placeholder="输入消息...">
+        <button class="chat-send-btn" onclick="sendMessage(document.getElementById('userInput').value)">发送</button>
+      </div>
+
+<script>
+    var map = new AMap.Map('container', {
+        resizeEnable: true,
+        center: [113.324361,23.10841],
+        zoom: 13,
+        mapStyle: 'amap://styles/fresh',
+        isHotspot: true
+    });
+    const accessToken = 'pat_9zPxd6hYyOLpEENunjVgdyhU2ZDWBHM5Jt5R16yuEF1c1VwoMK82Bt9j6yEg6k9R';
+    const botId = '7398152219209580555';
+    const userId = '123';
+
+    // 发送消息的函数
+    let message;
+    var placeSearch = new AMap.PlaceSearch();  //构造地点查询类
+    var infoWindow=new AMap.InfoWindow({
+        offset: new AMap.Pixel(0, -50)
+    });
+    var markers = [];
+    map.on('hotspotclick', async function(result) {
+    try {
+        const details = await new Promise((resolve, reject) => {
+            placeSearch.getDetails(result.id, function(status, result) {
+                if (status === 'complete' && result.info === 'OK') {
+                    resolve(result);
+                } else {
+                    reject(new Error('Failed to get details'));
+                }
+            });
+        });
+
+        placeSearch_CallBack(details);
+    } catch (error) {
+        console.error('Error getting place details:', error);
+    }
+});
+    //回调函数
+    function placeSearch_CallBack(data) { 
+        var poiArr = data.poiList.pois;
+        if(poiArr[0]){
+          var location = poiArr[0].location;
+          var poiInfo = `${poiArr[0].name}`;
+          infoWindow.setContent(createContent(poiArr[0]));
+          infoWindow.open(map,location);
+          message = poiInfo; 
+          sendMessage(message); 
+        }
+    }
+    map.on('click', function(e) {
+    var marker = new AMap.Marker({
+        position: e.lnglat, // 标记的位置
+        map: map // 将标记添加到地图上
+    });
+    markers.push(marker); // 将标记添加到数组中
+    // 以下是添加的内容
+    setTimeout(function() {
+        marker.setMap(null); // 从地图上移除标记
+        markers.pop(); // 从数组中移除标记
+    }, 2000); // 设置两秒后执行
+});
+    
+    function createContent(poi) {  //信息窗体内容
+        var s = [];
+        s.push('<div class="info-title">'+poi.name+'</div><div class="info-content">'+"地址：" + poi.address);
+        s.push("电话：" + poi.tel);
+        s.push("类型：" + poi.type);
+        s.push('<div>');
+        return s.join("<br>");
+    }
+
+    
+    async function sendMessage(message) {
+      // const message = document.getElementById('userInput').value;
+      // // 添加用户消息到聊天窗口
+      const chatWindow = document.getElementById('chatWindow');
+      chatWindow.innerHTML += `
+    <div class="chat-message right">
+        <div class="bubble">${message}</div>
+    </div>
+  `;
+      chatWindow.innerHTML += `
+        <div class="chat-message left loading">
+            <div class="spinner"></div>
+        </div>
+      `;
+      document.getElementById('userInput').value = ''; 
+      const previousMessages = chatWindow.querySelectorAll('.chat-message .bubble');
+    const additionalMessages = Array.from(previousMessages).map(message => {
+      const role = message.parentNode.classList.contains('right') ? 'user' : 'assistant';
+      const content = message.innerText;
+      return {
+        role,
+        content,
+        content_type: 'text'
+      };
+    });
+
+      // 发起对话请求
+      try {
+      const response = await axios.post('https://api.coze.cn/v3/chat', {
+        bot_id: botId,
+        user_id: userId,
+        stream: false,
+        auto_save_history: true,
+        additional_messages: additionalMessages.concat({
+          role: 'user',
+          content: message,
+          content_type: 'text'
+        })
+      }, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const chatId = response.data.data.id;
+      const conversationId = response.data.data.conversation_id;
+
+      // 轮询查看对话状态，直到对话完成
+      while (true) {
+        const statusResponse = await axios.get('https://api.coze.cn/v3/chat/retrieve', {
+          params: {
+            chat_id: chatId,
+            conversation_id: conversationId
+          },
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (statusResponse.data.data.status === 'completed') {
+          break;
+        }
+        await new Promise(resolve => setTimeout(resolve, 1000)); // 等待 1 秒再次查询
+      }
+
+      // 获取对话消息详情
+      const messagesResponse = await axios.get('https://api.coze.cn/v3/chat/message/list', {
+        params: {
+          chat_id: chatId,
+          conversation_id: conversationId
+        },
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      const loadingDiv = chatWindow.querySelector('.loading');
+      chatWindow.removeChild(loadingDiv);
+
+      // 添加模型回复到聊天窗口
+      const modelReply = messagesResponse.data.data[messagesResponse.data.data.length - 2].content;
+      const formattedReply = modelReply.replace(/\n/g, '<br>');
+      chatWindow.innerHTML += `
+          <div class="chat-message left">
+              <div class="bubble">${formattedReply}</div>
+          </div>
+          `
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  }
+    
+</script>
+</body>
+</html>
